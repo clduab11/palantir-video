@@ -11,12 +11,12 @@ export function LowerDeck({ result }: { result: SynthesisResult | null }) {
   const gaps = result?.sitrep.verificationGaps ?? [];
 
   return (
-    <div className="grid min-h-0 gap-2 lg:grid-cols-3">
+    <div className="grid h-full min-h-0 gap-2 lg:grid-cols-3">
       <DeckColumn title="Conflict log" count={result?.conflicts.length ?? 0}>
         {conflicts.length === 0 ? (
           <Empty>No friction until a stream is ingested.</Empty>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {conflicts.map((line, index) => (
               <li
                 key={`${index}-${line}`}
@@ -32,7 +32,7 @@ export function LowerDeck({ result }: { result: SynthesisResult | null }) {
         {triggers.length === 0 ? (
           <Empty>Triggers arm as signatures corroborate.</Empty>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {triggers.map((trigger, index) => (
               <li
                 key={`${index}-${trigger.condition}`}
@@ -57,7 +57,7 @@ export function LowerDeck({ result }: { result: SynthesisResult | null }) {
         {gaps.length === 0 ? (
           <Empty>Blind spots appear after triage.</Empty>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {gaps.map((line, index) => (
               <li
                 key={`${index}-${line}`}
@@ -83,14 +83,14 @@ function DeckColumn({
   children: ReactNode;
 }) {
   return (
-    <section className="tise-panel min-h-[160px] overflow-auto">
-      <header className="flex items-center justify-between border-b border-white/10 px-3 py-1.5">
+    <section className="tise-panel flex min-h-0 flex-col overflow-hidden">
+      <header className="flex h-7 shrink-0 items-center justify-between border-b border-white/10 px-2.5">
         <h2 className="font-mono text-[10px] tracking-[0.2em] text-zinc-400 uppercase">
           {title}
         </h2>
         <span className="font-mono text-[10px] text-zinc-600">{count}</span>
       </header>
-      <div className="p-2">{children}</div>
+      <div className="tise-scroll min-h-0 flex-1 p-1.5">{children}</div>
     </section>
   );
 }

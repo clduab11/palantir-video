@@ -418,7 +418,7 @@ export function UnitMap({
   const mapRef = useRef<L.Map | null>(null);
 
   return (
-    <div className="tise-map relative h-full min-h-[280px] w-full flex-1">
+    <div className="tise-map relative h-full min-h-0 w-full flex-1">
       <div className="absolute inset-0">
         <MapContainer
           ref={mapRef}
@@ -513,7 +513,7 @@ export function UnitMap({
           Layer: fictional chart on water
         </p>
       </div>
-      <p className="pointer-events-none absolute inset-x-0 bottom-0 z-[1100] flex h-6 items-center justify-center bg-[#070b10]/80 px-2 text-center font-mono text-[10px] tracking-wide text-amber-100">
+      <p className="pointer-events-none absolute inset-x-0 bottom-0 z-[1100] flex h-5 items-center justify-center bg-[#070b10]/82 px-2 text-center font-mono text-[10px] tracking-wide text-amber-100">
         Training datum. Relative MGRS geometry. Not a real place.
       </p>
     </div>

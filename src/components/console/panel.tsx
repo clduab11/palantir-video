@@ -23,20 +23,20 @@ export function Panel({
         className,
       )}
     >
-      <header className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-1.5">
-        <h2 className="shrink-0 font-mono text-[10px] font-semibold tracking-[0.22em] text-amber-200/90 uppercase">
+      <header className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-white/10 px-2.5">
+        <h2 className="min-w-[11rem] shrink-0 font-mono text-[10px] font-semibold tracking-[0.2em] text-amber-200/90 uppercase">
           {title}
         </h2>
         <div className="flex min-w-0 items-center gap-2">
           {toolbar}
           {meta ? (
-            <span className="font-mono text-[10px] tracking-wider text-zinc-500 uppercase">
+            <span className="truncate font-mono text-[10px] tracking-wider text-zinc-500 uppercase">
               {meta}
             </span>
           ) : null}
         </div>
       </header>
-      <div className={cn("min-h-0 flex-1", bodyClassName ?? "overflow-auto")}>
+      <div className={cn("min-h-0 flex-1", bodyClassName ?? "tise-scroll")}>
         {children}
       </div>
     </section>

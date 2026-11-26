@@ -47,7 +47,7 @@ export function SignalStream({
       {rejected.map((item) => (
         <li
           key={`rej-${item.index}-${item.event_id ?? "unknown"}`}
-          className="border-l-2 border-red-500 bg-red-950/30 px-3 py-2"
+          className="border-l-2 border-red-500 bg-red-950/30 px-2.5 py-1.5"
         >
           <p className="font-mono text-[10px] tracking-wider text-red-300 uppercase">
             Rejected
@@ -59,43 +59,45 @@ export function SignalStream({
         const discardedHit = discarded.some(
           (row) => row.event_id === event.event_id,
         );
+        const grade = grades?.[event.event_id];
         return (
           <li key={event.event_id}>
-            <button
-              type="button"
-              onClick={() => onSelect(event.event_id)}
+            <div
               className={cn(
-                "flex w-full flex-col gap-1 px-3 py-2 text-left transition-colors hover:bg-white/5",
+                "flex w-full flex-col gap-1 px-2.5 py-1.5 transition-colors hover:bg-white/5",
                 selectedId === event.event_id && "bg-amber-500/10",
                 discardedHit && "opacity-45",
               )}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className={cn(
-                    "rounded-sm border px-1.5 py-0.5 font-mono text-[10px] tracking-wider",
-                    vectorTone(event.vector_type),
-                  )}
-                >
-                  {event.vector_type}
-                </span>
-                <span className="font-mono text-[10px] text-zinc-500">
-                  {ageLabel(event.timestamp, now)}
-                  {discardedHit ? " · NOISE" : ""}
-                </span>
-              </div>
-              <p className="line-clamp-2 text-xs leading-snug text-zinc-200">
-                {event.payload}
-              </p>
+              <button
+                type="button"
+                onClick={() => onSelect(event.event_id)}
+                className="flex w-full flex-col gap-1 text-left"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={cn(
+                      "rounded-sm border px-1.5 py-0.5 font-mono text-[10px] tracking-wider",
+                      vectorTone(event.vector_type),
+                    )}
+                  >
+                    {event.vector_type}
+                  </span>
+                  <span className="font-mono text-[10px] text-zinc-500">
+                    {ageLabel(event.timestamp, now)}
+                    {discardedHit ? " · NOISE" : ""}
+                  </span>
+                </div>
+                <p className="line-clamp-2 text-xs leading-snug text-zinc-200">
+                  {event.payload}
+                </p>
+              </button>
               <div className="flex items-center justify-between gap-2 font-mono text-[10px] text-zinc-500">
                 <span className="truncate">
                   {event.source_id}
-                  {grades?.[event.event_id]
-                    ? ` · ${grades[event.event_id]?.code}`
-                    : ""}
-                  {grades?.[event.event_id] &&
-                  (grades[event.event_id]?.falsity ?? 0) >= 0.4
-                    ? ` · ${grades[event.event_id]?.whaley} ${grades[event.event_id]?.falsity.toFixed(2)}`
+                  {grade ? ` · ${grade.code}` : ""}
+                  {grade && grade.falsity >= 0.4
+                    ? ` · ${grade.whaley} ${grade.falsity.toFixed(2)}`
                     : ""}
                 </span>
                 <span className="flex items-center gap-1">
@@ -109,29 +111,27 @@ export function SignalStream({
                     {event.confidence_score.toFixed(2)}
                   </span>
                   {onQuarantine ? (
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(click) => {
-                        click.stopPropagation();
-                        onQuarantine(event.event_id);
-                      }}
-                      onKeyDown={(key) => {
-                        if (key.key === "Enter") onQuarantine(event.event_id);
-                      }}
+                    <button
+                      type="button"
+                      data-testid={`quarantine-${event.event_id}`}
+                      aria-label={
+                        grade?.quarantined ? "Restore event" : "Quarantine event"
+                      }
+                      aria-pressed={Boolean(grade?.quarantined)}
+                      onClick={() => onQuarantine(event.event_id)}
                       className={cn(
                         "rounded-sm border px-1 py-0.5",
-                        grades?.[event.event_id]?.quarantined
+                        grade?.quarantined
                           ? "border-red-400 text-red-200"
-                          : "border-white/15",
+                          : "border-white/15 hover:border-cyan-400/50 hover:text-cyan-100",
                       )}
                     >
-                      {grades?.[event.event_id]?.quarantined ? "IN" : "OUT"}
-                    </span>
+                      {grade?.quarantined ? "IN" : "OUT"}
+                    </button>
                   ) : null}
                 </span>
               </div>
-            </button>
+            </div>
           </li>
         );
       })}

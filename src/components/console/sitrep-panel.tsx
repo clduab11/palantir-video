@@ -42,7 +42,7 @@ export function SitrepPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-1.5">
+      <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-white/10 px-2.5">
         <div className="flex gap-1">
           <Button
             size="xs"
@@ -65,11 +65,11 @@ export function SitrepPanel({
         </Button>
       </div>
       {mode === "raw" ? (
-        <pre className="min-h-0 flex-1 overflow-auto p-3 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-200">
+        <pre className="tise-scroll min-h-0 flex-1 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-200">
           {raw}
         </pre>
       ) : (
-        <div className="min-h-0 flex-1 space-y-4 overflow-auto p-3">
+        <div className="tise-scroll min-h-0 flex-1 space-y-3 p-2.5">
           <div className="font-mono text-[10px] tracking-wider text-zinc-500">
             {sitrep.sitrepId}
             <br />
@@ -137,7 +137,7 @@ export function SitrepPanel({
             </ul>
           </Section>
           <Section title="V. Recommended posture">
-            <p className="font-mono text-lg tracking-[0.2em] text-amber-200">
+            <p className="font-mono text-base tracking-[0.18em] text-amber-200">
               {sitrep.recommendedPosture}
             </p>
             <p className="mt-1 text-xs text-zinc-400">{sitrep.postureRationale}</p>
