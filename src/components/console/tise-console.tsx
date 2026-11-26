@@ -282,7 +282,7 @@ export function TiseConsole() {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-[#070b10] text-zinc-100 max-lg:h-auto max-lg:min-h-dvh max-lg:overflow-visible">
       <div className="bg-amber-400 px-3 py-1 text-center font-mono text-[10px] font-semibold tracking-[0.22em] text-black uppercase">
-        {scenario.classification} · not for operational use
+        Training instrument · Fictional AOI · Not for operational use
       </div>
       <header
         className="relative flex flex-wrap items-center justify-between gap-2 overflow-hidden border-b border-white/10 bg-[#0b1016] px-3 py-1.5"
