@@ -94,6 +94,7 @@ async function rpc(
       authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+    signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) {
     throw new Error(`Synactic MCP HTTP ${response.status}`);

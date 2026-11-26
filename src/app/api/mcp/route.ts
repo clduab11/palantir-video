@@ -16,9 +16,12 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json({
-    name: "tise",
-    protocol: "mcp",
-    card: "/.well-known/mcp/server-card.json",
-  });
+  return NextResponse.json(
+    {
+      name: "tise",
+      protocol: "mcp",
+      card: "/.well-known/mcp/server-card.json",
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

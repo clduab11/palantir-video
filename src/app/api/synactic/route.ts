@@ -4,7 +4,9 @@ import { ingestAndSynthesize } from "@/lib/tise";
 import { pullSynacticEvents, synacticStatus } from "@/lib/synactic/client";
 
 export async function GET() {
-  return NextResponse.json(synacticStatus());
+  return NextResponse.json(synacticStatus(), {
+    headers: { "Cache-Control": "no-store" },
+  });
 }
 
 export async function POST() {
