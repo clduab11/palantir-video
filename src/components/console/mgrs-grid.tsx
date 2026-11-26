@@ -3,9 +3,14 @@
 import { cn } from "cn";
 
 import { renderMilSymbolSvg } from "@/lib/interop/symbology";
+import {
+  formatLatLon,
+  localOrigin,
+  toDisplayLatLon,
+} from "@/lib/interop/training-chart";
 import { landmarkLabel } from "@/lib/tise/lexicon";
 import { parseMgrs } from "@/lib/tise/mgrs";
-import type { Cluster, TiseEvent, VectorType } from "@/lib/tise/types";
+import type { Cluster, MgrsPoint, TiseEvent, VectorType } from "@/lib/tise/types";
 
 const CELL = 10;
 
@@ -22,6 +27,7 @@ export function MgrsGrid({
 }) {
   const aoi = clusters[0]?.cell1km ?? "18S UJ 23 06";
   const origin = originFromAoi(aoi);
+  const chartOrigin = clusterDisplayOrigin(events, clusters);
 
   const cells = new Map<
     string,
@@ -88,7 +94,7 @@ export function MgrsGrid({
                 )}
                 title={
                   cluster
-                    ? `${cluster.id} ${landmarkLabel(cluster.landmark)} v=${cluster.veracity.toFixed(2)}`
+                    ? `${cluster.id} ${landmarkLabel(cluster.landmark)} v=${cluster.veracity.toFixed(2)} · ${formatLatLon(toDisplayLatLon(cluster.centroid, chartOrigin), 4)}`
                     : `${aoi} +${e}/+${n}`
                 }
               >
@@ -133,6 +139,11 @@ export function MgrsGrid({
               <span>
                 {cluster.id} {landmarkLabel(cluster.landmark)}
                 {cluster.hot ? " · HOT" : ""}
+                {" · "}
+                {formatLatLon(
+                  toDisplayLatLon(cluster.centroid, chartOrigin),
+                  4,
+                )}
               </span>
               <span>v={cluster.veracity.toFixed(2)}</span>
             </button>
@@ -140,6 +151,20 @@ export function MgrsGrid({
         ))}
       </ul>
     </div>
+  );
+}
+
+function clusterDisplayOrigin(
+  events: readonly TiseEvent[],
+  clusters: readonly Cluster[],
+) {
+  const located: MgrsPoint[] = [];
+  for (const event of events) {
+    const parsed = parseMgrs(event.location.mgrs);
+    if (parsed) located.push(parsed);
+  }
+  return localOrigin(
+    located.length > 0 ? located : clusters.map((cluster) => cluster.centroid),
   );
 }
 

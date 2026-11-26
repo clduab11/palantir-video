@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   cellPolygon,
   equirectangularMeters,
+  formatLatLon,
   gridCellPolygons,
   liesOnWashingtonDc,
   localOrigin,
@@ -10,6 +11,7 @@ import {
   metersPerDegreeLon,
   relativeMeters,
   toDisplayLatLon,
+  TRAINING_AOI_LABEL,
   trainingAnchor,
 } from "@/lib/interop/training-chart";
 import { parseMgrs } from "@/lib/tise/mgrs";
@@ -21,7 +23,7 @@ function requireMgrs(raw: string) {
 }
 
 describe("training chart datum", () => {
-  it("keeps a 100m relative offset about 100m apart on the ocean anchor", () => {
+  it("keeps a 100m relative offset about 100m apart on the Mojave NTC landmass anchor", () => {
     const origin = { lat: 38.89, lon: -77.03 };
     const point = {
       lat: origin.lat + 100 / METERS_PER_DEGREE_LAT,
@@ -124,5 +126,29 @@ describe("training chart datum", () => {
     expect(square?.polygon[0]?.lat).toBeCloseTo(southwest.lat, 6);
     expect(square?.polygon[0]?.lon).toBeCloseTo(southwest.lon, 6);
     expect(localOrigin([])).toEqual(trainingAnchor);
+  });
+});
+
+describe("formatLatLon", () => {
+  it("labels the Fort Irwin NTC training AOI", () => {
+    expect(TRAINING_AOI_LABEL).toBe("Fort Irwin NTC · Mojave");
+  });
+
+  it("uses four digits by default", () => {
+    expect(formatLatLon(trainingAnchor)).toBe("35.3000°N, 116.5700°W");
+  });
+
+  it("honors a custom digit count", () => {
+    expect(formatLatLon(trainingAnchor, 5)).toBe("35.30000°N, 116.57000°W");
+  });
+
+  it("labels northern latitude and western longitude", () => {
+    expect(formatLatLon({ lat: 35.3, lon: -116.57 })).toBe(
+      "35.3000°N, 116.5700°W",
+    );
+  });
+
+  it("labels southern latitude and eastern longitude", () => {
+    expect(formatLatLon({ lat: -12.5, lon: 45.25 })).toBe("12.5000°S, 45.2500°E");
   });
 });

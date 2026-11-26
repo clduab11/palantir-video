@@ -5,9 +5,9 @@ import type { MgrsPoint } from "@/lib/tise/types";
  *
  * Vignette MGRS strings geocode to downtown Washington, DC. Callers pass
  * those latitudes and longitudes in, and this module keeps only the relative
- * north/east meter offsets. The offsets are drawn on an open-ocean anchor
- * so unit markers never land on that city or any other real street grid.
- * The basemap under the chart is water; the blocks and roads are fictional.
+ * north/east meter offsets. The offsets are drawn on the Fort Irwin / Mojave
+ * NTC training AOI so unit markers never land on that city or any other real
+ * street grid. Relative MGRS geometry remains training-only.
  */
 
 export type LatLon = {
@@ -15,11 +15,20 @@ export type LatLon = {
   readonly lon: number;
 };
 
-/** North Atlantic, clear of coasts and streets. */
+/** Fort Irwin NTC · Tiefort Mountains / Central Corridor interface. */
 export const trainingAnchor: LatLon = {
-  lat: 36.2,
-  lon: -60.5,
+  lat: 35.3,
+  lon: -116.57,
 };
+
+export const TRAINING_AOI_LABEL = "Fort Irwin NTC · Mojave";
+
+/** Hemisphere-aware lat/lon for console HUD and cluster footers. */
+export function formatLatLon(point: LatLon, digits = 4): string {
+  const latHemisphere = point.lat >= 0 ? "N" : "S";
+  const lonHemisphere = point.lon >= 0 ? "E" : "W";
+  return `${Math.abs(point.lat).toFixed(digits)}°${latHemisphere}, ${Math.abs(point.lon).toFixed(digits)}°${lonHemisphere}`;
+}
 
 /** Equirectangular meters per degree of latitude. */
 export const METERS_PER_DEGREE_LAT = 111_320;
