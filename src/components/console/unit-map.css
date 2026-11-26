@@ -6,7 +6,11 @@
 }
 
 .tise-map .leaflet-bottom {
-  bottom: 32px;
+  bottom: 28px;
+}
+
+.tise-map .leaflet-top {
+  top: 8px;
 }
 
 .tise-map .leaflet-control-attribution {

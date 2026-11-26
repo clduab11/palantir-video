@@ -29,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`dark ${sans.variable} ${mono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-[#070b10] font-sans text-foreground">
+      <body className="flex min-h-full flex-col overflow-x-clip bg-[#070b10] font-sans text-foreground">
         <TooltipProvider delay={200}>{children}</TooltipProvider>
       </body>
     </html>

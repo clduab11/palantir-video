@@ -51,7 +51,7 @@ export function MgrsGrid({
   }
 
   return (
-    <div className="flex h-full min-h-[280px] flex-col gap-2 p-3">
+    <div className="flex h-full min-h-0 flex-col gap-1.5 p-2.5">
       <div className="flex items-center justify-between font-mono text-[10px] tracking-wider text-zinc-500 uppercase">
         <span>100m cells · {aoi}</span>
         <span>N up</span>
@@ -119,7 +119,7 @@ export function MgrsGrid({
           })}
         </div>
       </div>
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[10px] text-zinc-400">
+      <ul className="grid shrink-0 grid-cols-2 gap-x-3 gap-y-0.5 font-mono text-[10px] text-zinc-400">
         {clusters.map((cluster) => (
           <li key={cluster.id}>
             <button

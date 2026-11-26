@@ -21,6 +21,7 @@ import {
 
 export function IngestDock({
   playing,
+  scenarioName,
   synacticReady,
   synacticReason,
   error,
@@ -34,6 +35,7 @@ export function IngestDock({
   onNominate,
 }: {
   playing: boolean;
+  scenarioName: string;
   synacticReady: boolean;
   synacticReason: string;
   error: string | null;
@@ -50,8 +52,8 @@ export function IngestDock({
   const [draft, setDraft] = useState("");
 
   return (
-    <div className="tise-panel flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-wrap items-center gap-1.5">
+    <div className="tise-panel flex flex-col gap-1.5 px-2.5 py-1.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto">
         {playing ? (
           <Button size="sm" variant="secondary" onClick={onPause}>
             <Pause />
@@ -60,7 +62,7 @@ export function IngestDock({
         ) : (
           <Button size="sm" onClick={onPlay}>
             <Play />
-            Play District Seven
+            Play {scenarioName}
           </Button>
         )}
         <Button size="sm" variant="outline" onClick={onStep}>
@@ -97,7 +99,7 @@ export function IngestDock({
           Nominate strike
         </Button>
       </div>
-      <p className="max-w-xl font-mono text-[10px] leading-relaxed text-zinc-500">
+      <p className="max-w-sm shrink-0 font-mono text-[10px] leading-snug text-zinc-500">
         {error ? (
           <span className="text-red-300">{error}</span>
         ) : (

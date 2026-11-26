@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 
 import { IngestDock } from "@/components/console/ingest-dock";
 import { LowerDeck } from "@/components/console/lower-deck";
@@ -37,7 +38,7 @@ type MapSurface = "chart" | "cells";
 
 function ChartFallback() {
   return (
-    <div className="flex h-full min-h-[280px] flex-1 items-center justify-center font-mono text-[10px] tracking-[0.18em] text-zinc-500 uppercase">
+    <div className="flex h-full min-h-0 flex-1 items-center justify-center font-mono text-[10px] tracking-[0.18em] text-zinc-500 uppercase">
       Loading chart
     </div>
   );
@@ -193,7 +194,13 @@ export function TiseConsole() {
   }
 
   async function exportCot(mode: "awareness" | "nomination") {
-    setCotNote("");
+    setCotText("");
+    setCotNote(
+      mode === "nomination"
+        ? "Requesting strike nomination…"
+        : "Exporting awareness picture…",
+    );
+    setCotOpen(true);
     const response = await fetch("/api/export/cot", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -207,7 +214,6 @@ export function TiseConsole() {
     if (!response.ok) {
       setCotText("");
       setCotNote(payload.error ?? payload.policy?.message ?? "Export refused.");
-      setCotOpen(true);
       return;
     }
     setCotText(payload.xml ?? "");
@@ -216,7 +222,6 @@ export function TiseConsole() {
         ? "Nomination exported. A commander grant was not required for this response, which should not happen."
         : "Awareness CoT. Strike nomination stays behind a human grant.",
     );
-    setCotOpen(true);
   }
 
   useEffect(() => {
@@ -228,17 +233,37 @@ export function TiseConsole() {
       ) {
         return;
       }
-      if (event.key === "1") loadScenario("district-seven", false);
-      if (event.key === "2") loadScenario("corridor-mirage", false);
-      if (event.key === "3") loadScenario("iron-anvil", false);
-      if (event.key === "4") loadScenario("blackout-ddil", false);
+      if (lineageOpen || cotOpen) return;
+      if (event.key === "1") {
+        event.preventDefault();
+        loadScenario("district-seven", false);
+      }
+      if (event.key === "2") {
+        event.preventDefault();
+        loadScenario("corridor-mirage", false);
+      }
+      if (event.key === "3") {
+        event.preventDefault();
+        loadScenario("iron-anvil", false);
+      }
+      if (event.key === "4") {
+        event.preventDefault();
+        loadScenario("blackout-ddil", false);
+      }
       if (event.key === " ") {
         event.preventDefault();
         setPlaying((value) => !value);
       }
-      if (event.key === "l" || event.key === "L") setLineageOpen(true);
-      if (event.key === "m" || event.key === "M") setDeck("ach");
+      if (event.key === "l" || event.key === "L") {
+        event.preventDefault();
+        setLineageOpen(true);
+      }
+      if (event.key === "m" || event.key === "M") {
+        event.preventDefault();
+        setDeck((value) => (value === "ach" ? "friction" : "ach"));
+      }
       if (event.key === "c" || event.key === "C") {
+        event.preventDefault();
         void exportCot("awareness");
       }
     }
@@ -279,66 +304,90 @@ export function TiseConsole() {
     setLineageOpen(true);
   }
 
+  const showDelta = Boolean(priorPosture && priorPosture !== posture);
+
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-[#070b10] text-zinc-100 max-lg:h-auto max-lg:min-h-dvh max-lg:overflow-visible">
-      <div className="bg-amber-400 px-3 py-1 text-center font-mono text-[10px] font-semibold tracking-[0.22em] text-black uppercase">
+    <div
+      data-testid="tise-console"
+      className="tise-shell flex h-dvh min-h-0 flex-col overflow-hidden bg-[#070b10] text-zinc-100 max-lg:h-auto max-lg:min-h-dvh max-lg:overflow-visible"
+    >
+      <div
+        data-testid="tise-banner"
+        className="tise-banner shrink-0 bg-amber-400 px-3 py-1 text-center font-mono text-[10px] font-semibold tracking-[0.22em] text-black uppercase"
+      >
         Training instrument · Fictional AOI · Not for operational use
       </div>
-      <header
-        className="relative flex flex-wrap items-center justify-between gap-2 overflow-hidden border-b border-white/10 bg-[#0b1016] px-3 py-1.5"
-      >
-        <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="size-12 shrink-0 bg-contain bg-center bg-no-repeat drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]"
-            style={{ backgroundImage: "url(/brand/tise-mark.png)" }}
+      <header className="tise-masthead relative z-10 flex shrink-0 items-center gap-3 overflow-hidden border-b border-white/10 bg-[#0b1016] px-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Image
+            src="/brand/tise-mark.png"
+            alt="TISE"
+            width={36}
+            height={36}
+            priority
+            className="tise-mark"
           />
-          <div>
-            <p className="font-mono text-[10px] tracking-[0.28em] text-cyan-300/80">
+          <div className="min-w-0">
+            <p className="truncate font-mono text-[10px] tracking-[0.24em] text-cyan-300/85">
               TISE-v1 · {scenario.name}
             </p>
-            <h1 className="text-base font-semibold tracking-tight">
+            <h1 className="truncate text-[15px] leading-none font-semibold tracking-tight">
               Tactical Intelligence Synthesis Engine
             </h1>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
-          {SCENARIOS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => loadScenario(item.id, false)}
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5 font-mono text-[10px]">
+          <div
+            role="group"
+            aria-label="Vignettes"
+            className="flex shrink-0 items-center gap-1"
+          >
+            {SCENARIOS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                title={`${item.hotkey} ${item.name}`}
+                aria-pressed={item.id === scenarioId}
+                onClick={() => loadScenario(item.id, false)}
+                className={cn(
+                  "rounded-sm border px-1.5 py-0.5",
+                  item.id === scenarioId
+                    ? "border-amber-300 text-amber-100"
+                    : "border-white/10 text-zinc-400 hover:text-zinc-200",
+                )}
+              >
+                {item.hotkey} {item.name}
+              </button>
+            ))}
+          </div>
+          <div className="flex min-w-0 shrink-0 items-center gap-1.5">
+            <span className="tise-chip border-white/15 text-zinc-200 tabular-nums">
+              {formatZulu(clock)}
+            </span>
+            <span className={cn("tise-chip", threatTone(threat))}>
+              Threat {threat}
+            </span>
+            <span className="tise-chip border-amber-400/40 bg-amber-500/10 text-amber-200">
+              Posture {posture}
+            </span>
+            <span
+              data-testid="tise-delta"
+              aria-live="polite"
               className={cn(
-                "rounded-sm border px-1.5 py-1",
-                item.id === scenarioId
-                  ? "border-amber-300 text-amber-100"
-                  : "border-white/10 text-zinc-400",
+                "tise-chip tise-delta border-cyan-400/40 text-cyan-200",
+                !showDelta && "hidden",
               )}
             >
-              {item.hotkey} {item.name}
-            </button>
-          ))}
-          <span className="rounded-sm border border-white/15 px-2 py-1">
-            {formatZulu(clock)}
-          </span>
-          <span className={cn("rounded-sm border px-2 py-1", threatTone(threat))}>
-            Threat {threat}
-          </span>
-          <span className="rounded-sm border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-amber-200">
-            Posture {posture}
-          </span>
-          {priorPosture && priorPosture !== posture ? (
-            <span className="rounded-sm border border-cyan-400/40 px-2 py-1 text-cyan-200">
-              {priorPosture} → {posture}
+              {showDelta ? `${priorPosture} → ${posture}` : ""}
             </span>
-          ) : null}
-          <span className="rounded-sm border border-white/10 px-2 py-1 text-zinc-500">
-            {isSample ? "SAMPLE" : "INGEST"}
-          </span>
+            <span className="tise-chip border-white/10 text-zinc-500">
+              {isSample ? "SAMPLE" : "INGEST"}
+            </span>
+          </div>
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 gap-2 overflow-hidden p-2 lg:grid-cols-[minmax(16rem,22%)_minmax(0,1fr)_minmax(20rem,32%)]">
+      <div className="grid min-h-0 flex-1 gap-2 overflow-hidden px-2.5 py-2 lg:grid-cols-[minmax(16rem,20%)_minmax(0,1fr)_minmax(18.5rem,28%)]">
         <Panel title="Signals" meta={`${cursor}/${source.length}`}>
           <SignalStream
             events={acceptedEvents}
@@ -354,41 +403,28 @@ export function TiseConsole() {
         <Panel
           title={surface === "chart" ? "Training chart" : "MGRS grid"}
           meta={activeCluster?.admiraltyCode ?? "2525"}
-          bodyClassName={
-            surface === "chart" ? "flex flex-col overflow-hidden" : undefined
-          }
+          bodyClassName="flex min-h-0 flex-col overflow-hidden"
           toolbar={
             <div
               role="group"
               aria-label="Map surface"
-              className="flex items-center font-mono text-[10px] tracking-wider"
+              className="tise-seg"
             >
               <button
                 type="button"
+                data-testid="surface-chart"
                 aria-pressed={surface === "chart"}
                 onClick={() => setSurface("chart")}
-                className={cn(
-                  "px-1 py-0.5",
-                  surface === "chart"
-                    ? "text-amber-100"
-                    : "text-zinc-500 hover:text-zinc-300",
-                )}
+                className="tise-seg-btn"
               >
                 Chart
               </button>
-              <span className="px-0.5 text-zinc-600" aria-hidden="true">
-                |
-              </span>
               <button
                 type="button"
+                data-testid="surface-cells"
                 aria-pressed={surface === "cells"}
                 onClick={() => setSurface("cells")}
-                className={cn(
-                  "px-1 py-0.5",
-                  surface === "cells"
-                    ? "text-amber-100"
-                    : "text-zinc-500 hover:text-zinc-300",
-                )}
+                className="tise-seg-btn"
               >
                 Cells
               </button>
@@ -411,7 +447,11 @@ export function TiseConsole() {
             />
           )}
         </Panel>
-        <Panel title="Commander SITREP" meta={result?.sitrep.analyticConfidence ?? "—"}>
+        <Panel
+          title="Commander SITREP"
+          meta={result?.sitrep.analyticConfidence ?? "—"}
+          bodyClassName="flex min-h-0 flex-col overflow-hidden"
+        >
           <SitrepPanel
             sitrep={result?.sitrep ?? null}
             raw={result?.sitrepText ?? ""}
@@ -420,8 +460,11 @@ export function TiseConsole() {
         </Panel>
       </div>
 
-      <div className="h-36 shrink-0 overflow-hidden px-2 pb-1 max-lg:h-auto">
-        <div className="mb-1 flex gap-1">
+      <div
+        data-testid="tise-lower"
+        className="flex h-[var(--tise-lower)] shrink-0 flex-col overflow-hidden px-2.5 pb-1.5 max-lg:h-auto"
+      >
+        <div className="mb-1 flex h-6 shrink-0 items-center gap-1">
           <Button
             size="xs"
             variant={deck === "friction" ? "default" : "ghost"}
@@ -441,26 +484,32 @@ export function TiseConsole() {
           </span>
         </div>
         {deck === "friction" ? (
-          <div className="h-28 overflow-auto">
+          <div className="min-h-0 flex-1 overflow-hidden">
             <LowerDeck result={result} />
           </div>
         ) : (
-          <div className="grid h-28 grid-cols-2 gap-2 overflow-auto text-xs lg:grid-cols-4">
+          <div
+            data-testid="ach-strip"
+            className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-hidden text-xs lg:grid-cols-4"
+          >
             {(result?.ach.hypotheses ?? []).map((hypothesis) => (
-              <div key={hypothesis.id} className="tise-panel p-2">
+              <div key={hypothesis.id} className="tise-panel flex min-h-0 flex-col p-2">
                 <p className="font-mono text-[10px] text-amber-200">
                   {(hypothesis.posterior * 100).toFixed(0)}%
                 </p>
-                <p className="text-zinc-200">{hypothesis.label}</p>
+                <p className="mt-0.5 line-clamp-3 leading-snug text-zinc-200">
+                  {hypothesis.label}
+                </p>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <div className="px-2 pb-2">
+      <div className="shrink-0 px-2.5 pb-2">
         <IngestDock
           playing={streaming}
+          scenarioName={scenario.name}
           synacticReady={synactic.configured}
           synacticReason={synactic.reason}
           error={error}
@@ -485,7 +534,7 @@ export function TiseConsole() {
       </div>
 
       <Dialog open={lineageOpen} onOpenChange={setLineageOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="tise-dialog sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               Lineage · {activeCluster?.siteLabel ?? "AOI"}
@@ -497,7 +546,7 @@ export function TiseConsole() {
                 : "Select a hot zone."}
             </DialogDescription>
           </DialogHeader>
-          <ul className="max-h-72 space-y-2 overflow-auto text-xs">
+          <ul className="tise-scroll max-h-72 space-y-2 text-xs">
             {lineageObjects.map((object) => (
               <li key={object.id} className="flex gap-2 border-b border-white/10 pb-2">
                 <span
@@ -521,12 +570,12 @@ export function TiseConsole() {
       </Dialog>
 
       <Dialog open={cotOpen} onOpenChange={setCotOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent data-testid="cot-dialog" className="tise-dialog sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Cursor on Target</DialogTitle>
             <DialogDescription>{cotNote}</DialogDescription>
           </DialogHeader>
-          <pre className="max-h-80 overflow-auto font-mono text-[10px] whitespace-pre-wrap text-zinc-200">
+          <pre className="tise-scroll min-h-56 max-h-[24rem] font-mono text-[10px] whitespace-pre-wrap text-zinc-200">
             {cotText || "No document. Nomination without a grant is refused."}
           </pre>
         </DialogContent>
