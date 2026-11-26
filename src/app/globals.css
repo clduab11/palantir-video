@@ -133,99 +133,101 @@
   }
 }
 
-.tise-panel {
-  border: 1px solid color-mix(in oklch, var(--border) 70%, cyan 30%);
-  background: color-mix(in oklch, var(--card) 90%, black 10%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.045);
-}
+@layer components {
+  .tise-panel {
+    border: 1px solid color-mix(in oklch, var(--border) 70%, cyan 30%);
+    background: color-mix(in oklch, var(--card) 90%, black 10%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.045);
+  }
 
-.tise-shell {
-  --tise-banner: 1.625rem;
-  --tise-mast: 3.15rem;
-  --tise-lower: 8.85rem;
-  --tise-dock: 3.35rem;
-}
+  .tise-shell {
+    --tise-banner: 1.625rem;
+    --tise-mast: 3.15rem;
+    --tise-lower: 8.85rem;
+    --tise-dock: 3.35rem;
+  }
 
-.tise-banner {
-  box-shadow: 0 1px 0 rgb(7 11 16 / 0.55);
-}
+  .tise-banner {
+    box-shadow: 0 1px 0 rgb(7 11 16 / 0.55);
+  }
 
-.tise-masthead {
-  min-height: var(--tise-mast);
-}
+  .tise-masthead {
+    min-height: var(--tise-mast);
+  }
 
-.tise-mark {
-  display: block;
-  flex-shrink: 0;
-  width: 2.25rem;
-  height: 2.25rem;
-  object-fit: contain;
-  background: #05080c;
-  box-shadow: inset 0 0 0 1px rgb(103 232 249 / 0.2);
-}
+  .tise-mark {
+    display: block;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    object-fit: contain;
+    background: #05080c;
+    box-shadow: inset 0 0 0 1px rgb(103 232 249 / 0.2);
+  }
 
-.tise-scroll {
-  min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(255 255 255 / 0.18) transparent;
-}
+  .tise-scroll {
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.18) transparent;
+  }
 
-.tise-scroll::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+  .tise-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-.tise-scroll::-webkit-scrollbar-thumb {
-  background: rgb(255 255 255 / 0.16);
-  border-radius: 99px;
-}
+  .tise-scroll::-webkit-scrollbar-thumb {
+    background: rgb(255 255 255 / 0.16);
+    border-radius: 99px;
+  }
 
-.tise-seg {
-  display: inline-flex;
-  align-items: stretch;
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background: rgb(7 11 16 / 0.55);
-}
+  .tise-seg {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    background: rgb(7 11 16 / 0.55);
+  }
 
-.tise-seg-btn {
-  min-width: 3.4rem;
-  padding: 0.15rem 0.55rem;
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgb(161 161 170);
-}
+  .tise-seg-btn {
+    min-width: 3.4rem;
+    padding: 0.15rem 0.55rem;
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(161 161 170);
+  }
 
-.tise-seg-btn[aria-pressed="true"] {
-  background: rgb(245 158 11 / 0.14);
-  color: rgb(254 243 199);
-}
+  .tise-seg-btn[aria-pressed="true"] {
+    background: rgb(245 158 11 / 0.14);
+    color: rgb(254 243 199);
+  }
 
-.tise-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 2px;
-  border: 1px solid rgb(255 255 255 / 0.12);
-  padding: 0.2rem 0.45rem;
-  white-space: nowrap;
-  line-height: 1.2;
-}
+  .tise-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    padding: 0.2rem 0.45rem;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
 
-.tise-delta {
-  min-width: 8.5rem;
-}
+  .tise-delta {
+    min-width: 8.5rem;
+  }
 
-.tise-dialog {
-  border: 1px solid color-mix(in oklch, var(--border) 55%, cyan 45%);
-  background: #0c1218;
-  color: #e4e4e7;
-  box-shadow: 0 18px 48px rgb(0 0 0 / 0.55);
-}
+  .tise-dialog {
+    border: 1px solid color-mix(in oklch, var(--border) 55%, cyan 45%);
+    background: #0c1218;
+    color: #e4e4e7;
+    box-shadow: 0 18px 48px rgb(0 0 0 / 0.55);
+  }
 
-.tise-dialog [data-slot="dialog-description"] {
-  color: rgb(161 161 170);
+  .tise-dialog [data-slot="dialog-description"] {
+    color: rgb(161 161 170);
+  }
 }

@@ -370,15 +370,15 @@ export function TiseConsole() {
             <span className="tise-chip border-amber-400/40 bg-amber-500/10 text-amber-200">
               Posture {posture}
             </span>
-            <span
-              data-testid="tise-delta"
-              aria-live="polite"
-              className={cn(
-                "tise-chip tise-delta border-cyan-400/40 text-cyan-200",
-                !showDelta && "hidden",
-              )}
-            >
-              {showDelta ? `${priorPosture} → ${posture}` : ""}
+            <span aria-live="polite">
+              {showDelta ? (
+                <span
+                  data-testid="tise-delta"
+                  className="tise-chip tise-delta border-cyan-400/40 text-cyan-200"
+                >
+                  {priorPosture} → {posture}
+                </span>
+              ) : null}
             </span>
             <span className="tise-chip border-white/10 text-zinc-500">
               {isSample ? "SAMPLE" : "INGEST"}
