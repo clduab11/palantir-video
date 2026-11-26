@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import fc from "fast-check";
 
 import { averagingFuse, cumulativeFuse, normalizeOpinion, trustDiscount, vacuousOpinion } from "@/lib/epistemics/subjective-logic";
 import { exportCotXml } from "@/lib/interop/cot";
 import { mintCommanderApprovalGrant } from "@/lib/policy/action-policy";
+import { resetCommanderGrantLedger } from "@/lib/policy/grant-ledger";
 import { scenarioEvents, SCENARIOS } from "@/lib/scenario/catalog";
 import { ironAnvilScenario } from "@/lib/scenario/iron-anvil";
 import { ingestAndSynthesize, parseTiseEvent } from "@/lib/tise";
@@ -11,6 +12,10 @@ import { runEval } from "@/lib/eval/scorecard";
 import { renderMilSymbolSvg } from "@/lib/interop/symbology";
 
 const NOW = new Date("2026-11-26T14:00:00.000Z");
+
+beforeEach(() => {
+  resetCommanderGrantLedger();
+});
 
 function onSimplex(opinion: { b: number; d: number; u: number }): boolean {
   return (

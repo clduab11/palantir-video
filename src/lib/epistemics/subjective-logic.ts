@@ -1,3 +1,4 @@
+import { assertNever } from "@/lib/tise/never";
 import type { AssertionKind, Opinion } from "@/lib/tise/types";
 
 const EPS = 1e-9;
@@ -5,6 +6,43 @@ const EPS = 1e-9;
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(1, Math.max(0, value));
+}
+
+function snapToSimplex(bIn: number, dIn: number, uIn: number, a: number): Opinion {
+  let b = clamp01(bIn);
+  let d = clamp01(dIn);
+  let u = clamp01(uIn);
+
+  // Dogmatic leftover u from floating-point drift is not evidence.
+  if (u <= EPS) {
+    u = 0;
+    const mass = b + d;
+    if (mass <= EPS) {
+      return { b: 0, d: 0, u: 1, a, projected: a };
+    }
+    b /= mass;
+    d /= mass;
+  } else {
+    const sum = b + d + u;
+    if (sum <= EPS) {
+      return { b: 0, d: 0, u: 1, a, projected: a };
+    }
+    b /= sum;
+    d /= sum;
+    u = Math.max(0, 1 - b - d);
+    if (u <= EPS) {
+      u = 0;
+      const mass = b + d;
+      if (mass <= EPS) {
+        return { b: 0, d: 0, u: 1, a, projected: a };
+      }
+      b /= mass;
+      d /= mass;
+    }
+  }
+
+  const projected = clamp01(b + a * u);
+  return { b, d, u, a, projected };
 }
 
 export function normalizeOpinion(
@@ -23,11 +61,7 @@ export function normalizeOpinion(
     return { b: 0, d: 0, u: 1, a, projected: a };
   }
 
-  const b = bPos / total;
-  const d = dPos / total;
-  const u = Math.max(0, 1 - b - d);
-  const projected = clamp01(b + a * u);
-  return { b, d, u, a, projected };
+  return snapToSimplex(bPos / total, dPos / total, uPos / total, a);
 }
 
 export function vacuousOpinion(baseRate = 0.5): Opinion {
@@ -92,7 +126,11 @@ export function cumulativeFuse(left: Opinion, right: Opinion): Opinion {
  */
 export function averagingFuse(opinions: readonly Opinion[]): Opinion {
   if (opinions.length === 0) return vacuousOpinion();
-  if (opinions.length === 1) return opinions[0] ?? vacuousOpinion();
+  if (opinions.length === 1) {
+    const only = opinions[0];
+    if (!only) return vacuousOpinion();
+    return normalizeOpinion(only.b, only.d, only.u, only.a);
+  }
 
   const dogmatic = opinions.filter((op) => op.u <= EPS);
   if (dogmatic.length > 0) {
@@ -169,16 +207,17 @@ export function claimPolarity(kind: AssertionKind): 1 | -1 | 0 {
     case "static_defense":
     case "movement":
     case "ambush":
+    case "em_active":
       return 1;
     case "absence":
     case "thermal_none":
     case "em_none":
     case "decoy":
       return -1;
-    case "em_active":
-      return 1;
     case "civilian":
       return 0;
+    default:
+      return assertNever(kind, "assertion kind");
   }
 }
 

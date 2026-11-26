@@ -23,9 +23,13 @@ Open `src/lib/epistemics/subjective-logic.ts`, `src/lib/epistemics/deception.ts`
 ```bash
 npm test
 npm run eval
+npm run tise -- synthesize district-seven --format=sitrep
+npm run tise -- synthesize corridor-mirage --format=sitrep
+npm run tise -- synthesize iron-anvil --format=sitrep
+npm run tise -- synthesize blackout-ddil --format=sitrep
 ```
 
-The property tests cover the opinion simplex, secret rejection, echo-chamber fusion, and the civilian strike ban. The scorecard in `docs/EVAL-SCORECARD.md` is the vignette contract.
+The property tests cover the opinion simplex, secret rejection, echo-chamber fusion, the civilian strike ban, CoT grant replay/expiry, and read-only MCP nomination refusal. The scorecard in `docs/EVAL-SCORECARD.md` is the vignette contract.
 
 ## If someone asks
 

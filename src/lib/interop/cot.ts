@@ -2,10 +2,13 @@ import {
   buildDefaultTisePolicies,
   createAuditRecord,
   evaluatePolicy,
+  ReasonCodes,
+  REASON_MESSAGES,
   type ApprovalGrant,
   type PolicyDecision,
   type ToolCallAuditRecord,
 } from "@/lib/policy/action-policy";
+import { consumeCommanderGrant } from "@/lib/policy/grant-ledger";
 import { eventIntegrityHash } from "@/lib/tise/lexicon";
 import { localOrigin, toDisplayLatLon } from "@/lib/interop/training-chart";
 import { parseMgrs } from "@/lib/tise/mgrs";
@@ -152,6 +155,33 @@ export function exportCotXml(input: {
       policyDecision,
       auditRecord,
     };
+  }
+
+  if (requiresWriteGate && input.approvalGrant) {
+    if (!consumeCommanderGrant(input.approvalGrant.grantId)) {
+      const replayDecision: PolicyDecision = {
+        decision: "require-approval",
+        reasonCode: ReasonCodes.ApprovalAlreadyUsed,
+        policyId: policyDecision.policyId,
+        message: REASON_MESSAGES["approval-already-used"],
+      };
+      return {
+        ok: false,
+        mode,
+        policyDecision: replayDecision,
+        auditRecord: createAuditRecord({
+          toolName,
+          decision: replayDecision,
+          args: {
+            sitrepId: input.synthesis.sitrep.sitrepId,
+            mode,
+            posture: input.synthesis.sitrep.recommendedPosture,
+          },
+          grantId: input.approvalGrant.grantId,
+          now,
+        }),
+      };
+    }
   }
 
   const consumedGrant: ApprovalGrant | null =

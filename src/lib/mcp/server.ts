@@ -1,5 +1,6 @@
 import { scenarioEvents, type ScenarioId, isScenarioId } from "@/lib/scenario/catalog";
 import { exportCotXml } from "@/lib/interop/cot";
+import { secretShapedRejection } from "@/lib/policy/secret-guard";
 import { ingestAndSynthesize, type SynthesisResult } from "@/lib/tise";
 import { adaptInbound } from "@/lib/synactic/adapter";
 
@@ -78,7 +79,14 @@ export function callTiseTool(
   name: string,
   args: ToolArgs,
 ): { ok: true; data: unknown } | { ok: false; error: string } {
-  if (name === "tise_export_cot" && args.mode === "nomination") {
+  const blocked = secretShapedRejection(args);
+  if (blocked) {
+    return { ok: false, error: blocked.error };
+  }
+
+  const requestedMode =
+    typeof args.mode === "string" ? args.mode.trim().toLowerCase() : "";
+  if (name === "tise_export_cot" && requestedMode === "nomination") {
     return {
       ok: false,
       error:
