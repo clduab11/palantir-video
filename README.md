@@ -6,7 +6,9 @@ It sits downstream of [the-synactic](https://github.com/clduab11/the-synactic): 
 
 ## What you can show
 
-The center pane is a chart you can pan and zoom. Markers keep the relative MGRS picture and are drawn on a training datum in open ocean, not on the city those grid strings happen to invert to. The 100 m cell grid is still there under Chart | Cells.
+The center pane is a chart you can pan and zoom. The 100 m cell grid is still there under Chart | Cells.
+
+**MGRS / Washington, DC datum caveat.** Vignette MGRS strings in square `18S UJ` invert near downtown Washington, DC (for example `18S UJ 23481 06512` → about 38.890 N, 77.035 W). The training chart does not plot those coordinates. It keeps only the relative meters and draws them on an ocean training datum at `36.20 N, 60.50 W`. Do not paste a vignette grid into a live C2 client.
 
 Open the console and step four fictional vignettes:
 
