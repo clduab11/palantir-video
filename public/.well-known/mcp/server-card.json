@@ -1,0 +1,24 @@
+{
+  "name": "tise",
+  "title": "Tactical Intelligence Synthesis Engine",
+  "version": "1.0.0",
+  "description": "Read-only commander SITREP tools. Provenance or it did not happen. Strike nomination is not exposed here.",
+  "tools": [
+    {
+      "name": "tise_synthesize_stream",
+      "description": "Synthesize a TISE stream or a named training vignette into a commander SITREP."
+    },
+    {
+      "name": "tise_score_deception",
+      "description": "Score each event with Schubert falsity and a Whaley denial-and-deception class."
+    },
+    {
+      "name": "tise_rank_collection_gaps",
+      "description": "Rank verification gaps by expected information gain."
+    },
+    {
+      "name": "tise_export_cot",
+      "description": "Export awareness Cursor-on-Target XML. Nomination exports stay behind a human grant."
+    }
+  ]
+}
