@@ -74,6 +74,7 @@ Optional live pull, server-side only: `SYNCTIC_MCP_URL` and `SYNCTIC_API_KEY`. U
 | Method | Path | Purpose |
 | --- | --- | --- |
 | POST | `/api/ingest` | Synthesize a stream, 200 events max |
+| POST | `/api/synthesize` | Alias of `/api/ingest`; secret-shaped envelopes are rejected before fusion |
 | GET | `/api/scenario?id=` | One vignette plus its SITREP |
 | GET/POST | `/api/synactic` | Link status, or a pull from the configured MCP URL |
 | POST | `/api/export/cot` | Awareness CoT, or a nomination if a grant is attached |

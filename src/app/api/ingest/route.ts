@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { secretShapedRejection } from "@/lib/policy/secret-guard";
 import { ingestAndSynthesize } from "@/lib/tise";
 import { adaptInbound } from "@/lib/synactic/adapter";
 
@@ -12,6 +13,11 @@ export async function POST(request: Request) {
       { error: "REJECTED: body is not JSON" },
       { status: 400 },
     );
+  }
+
+  const blocked = secretShapedRejection(body);
+  if (blocked) {
+    return NextResponse.json(blocked, { status: 400 });
   }
 
   const adapted = adaptInbound(body);

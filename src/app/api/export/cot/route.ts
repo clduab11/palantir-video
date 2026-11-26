@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { exportCotXml, type CotExportMode } from "@/lib/interop/cot";
 import { ApprovalGrantSchema } from "@/lib/policy/action-policy";
+import { secretShapedRejection } from "@/lib/policy/secret-guard";
 import { ingestAndSynthesize } from "@/lib/tise";
 import { adaptInbound } from "@/lib/synactic/adapter";
 
@@ -19,6 +20,11 @@ export async function POST(request: Request) {
       : null;
   if (!record) {
     return NextResponse.json({ error: "REJECTED: expected an object" }, { status: 400 });
+  }
+
+  const blocked = secretShapedRejection(record);
+  if (blocked) {
+    return NextResponse.json(blocked, { status: 400 });
   }
 
   const mode: CotExportMode = record.mode === "nomination" ? "nomination" : "awareness";

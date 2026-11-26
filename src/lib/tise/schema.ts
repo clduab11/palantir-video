@@ -173,6 +173,14 @@ export function parseEventStream(input: unknown): {
   candidates: unknown[];
   envelopeError?: string;
 } {
+  const secretHit = findSecretShapedField(input);
+  if (secretHit) {
+    return {
+      candidates: [],
+      envelopeError: `REJECTED: secret-shaped ${secretHit.kind} at ${formatSecretPath(secretHit.path)} — credentials cannot ride event envelopes`,
+    };
+  }
+
   if (Array.isArray(input)) {
     return { candidates: input };
   }

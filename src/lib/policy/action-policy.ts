@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { sha256Hex } from "@/lib/crypto/sha256";
+import { wasCommanderGrantConsumed } from "@/lib/policy/grant-ledger";
 import { noSecretShapedFields } from "@/lib/policy/secret-guard";
 
 /**
@@ -28,6 +29,7 @@ export const ReasonCodes = {
   WriteRequiresApproval: "write-requires-approval",
   ApprovalExpired: "approval-expired",
   ApprovalAlreadyUsed: "approval-already-used",
+  ApprovalInvalid: "approval-invalid",
   WriteApproved: "write-approved",
 } as const;
 
@@ -46,6 +48,8 @@ export const REASON_MESSAGES: Record<PolicyReasonCode, string> = {
     "Human approval required: commander grant has expired.",
   "approval-already-used":
     "Human approval required: single-use commander grant was already consumed.",
+  "approval-invalid":
+    "Human approval required: commander grant is invalid or tampered.",
   "write-approved":
     "Allowed: valid human commander grant verified for write/nomination export.",
 };
@@ -56,7 +60,7 @@ export const ApprovalGrantSchema = z
     grantedBy: z.string().min(1),
     grantedAt: z.string().refine((s) => !Number.isNaN(Date.parse(s))),
     expiresAt: z.string().refine((s) => !Number.isNaN(Date.parse(s))),
-    singleUse: z.boolean().default(true),
+    singleUse: z.literal(true).default(true),
     usedAt: z
       .string()
       .refine((s) => !Number.isNaN(Date.parse(s)))
@@ -127,14 +131,37 @@ function compareRanked(a: RankedPolicy, b: RankedPolicy): number {
   return a.policy.policyId.localeCompare(b.policy.policyId);
 }
 
+export function commanderGrantFingerprint(input: {
+  grantedBy: string;
+  grantedAt: string;
+  expiresAt: string;
+  singleUse: boolean;
+}): string {
+  return `GRT-${sha256Hex(
+    `${input.grantedBy}:${input.grantedAt}:${input.expiresAt}:${input.singleUse ? "1" : "0"}`,
+  )
+    .slice(0, 10)
+    .toUpperCase()}`;
+}
+
+export function grantIntegrityIntact(grant: ApprovalGrant): boolean {
+  return grant.grantId === commanderGrantFingerprint(grant);
+}
+
 function invalidGrantReason(
   grant: ApprovalGrant,
   now: Date,
 ): PolicyReasonCode | null {
+  if (!grantIntegrityIntact(grant)) {
+    return ReasonCodes.ApprovalInvalid;
+  }
   if (!(Date.parse(grant.expiresAt) > now.getTime())) {
     return ReasonCodes.ApprovalExpired;
   }
   if (grant.singleUse && grant.usedAt !== null) {
+    return ReasonCodes.ApprovalAlreadyUsed;
+  }
+  if (grant.singleUse && wasCommanderGrantConsumed(grant.grantId)) {
     return ReasonCodes.ApprovalAlreadyUsed;
   }
   return null;
@@ -173,6 +200,15 @@ export function evaluatePolicy(
   }
 
   const policy = winner.policy;
+  if (policy.effect === "deny") {
+    return {
+      decision: "deny",
+      reasonCode: ReasonCodes.PolicyDenied,
+      policyId: policy.policyId,
+      message: REASON_MESSAGES["policy-denied"],
+    };
+  }
+
   const allowedSideEffects = new Set(policy.allowedSideEffects);
   const forbidden = descriptor.requestedSideEffects.some(
     (effect) => !allowedSideEffects.has(effect),
@@ -183,15 +219,6 @@ export function evaluatePolicy(
       reasonCode: ReasonCodes.SideEffectNotAllowed,
       policyId: policy.policyId,
       message: REASON_MESSAGES["side-effect-not-allowed"],
-    };
-  }
-
-  if (policy.effect === "deny") {
-    return {
-      decision: "deny",
-      reasonCode: ReasonCodes.PolicyDenied,
-      policyId: policy.policyId,
-      message: REASON_MESSAGES["policy-denied"],
     };
   }
 
@@ -279,10 +306,16 @@ export function mintCommanderApprovalGrant(
 ): ApprovalGrant {
   const grantedAt = now.toISOString();
   const expiresAt = new Date(now.getTime() + Math.max(10_000, ttlMs)).toISOString();
-  const grantId = `GRT-${sha256Hex(`${grantedBy}:${grantedAt}`).slice(0, 10).toUpperCase()}`;
+  const grantedById = grantedBy.trim() || "QRF-6-ACTUAL";
+  const grantId = commanderGrantFingerprint({
+    grantedBy: grantedById,
+    grantedAt,
+    expiresAt,
+    singleUse: true,
+  });
   return ApprovalGrantSchema.parse({
     grantId,
-    grantedBy: grantedBy.trim() || "QRF-6-ACTUAL",
+    grantedBy: grantedById,
     grantedAt,
     expiresAt,
     singleUse: true,

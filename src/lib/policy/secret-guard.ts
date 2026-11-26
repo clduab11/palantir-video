@@ -72,6 +72,14 @@ export function findSecretShapedField(value: unknown): SecretShapedHit | null {
   return scanSecrets(value, [], new WeakSet());
 }
 
+export function secretShapedRejection(value: unknown): { error: string } | null {
+  const hit = findSecretShapedField(value);
+  if (!hit) return null;
+  return {
+    error: `REJECTED: secret-shaped ${hit.kind} at ${formatSecretPath(hit.path)} — credentials cannot ride event envelopes`,
+  };
+}
+
 export function formatSecretPath(path: readonly (string | number)[]): string {
   return path.length === 0 ? "<root>" : path.map(String).join(".");
 }
