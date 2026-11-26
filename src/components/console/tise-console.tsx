@@ -20,6 +20,11 @@ import {
 } from "@/components/ui/dialog";
 import { renderMilSymbolSvg } from "@/lib/interop/symbology";
 import {
+  formatLatLon,
+  localOrigin,
+  toDisplayLatLon,
+} from "@/lib/interop/training-chart";
+import {
   getScenario,
   scenarioEvents,
   SCENARIOS,
@@ -28,13 +33,34 @@ import {
 import { adaptInbound } from "@/lib/synactic/adapter";
 import { formatZulu, threatTone } from "@/lib/tise/format";
 import { ingestAndSynthesize } from "@/lib/tise";
-import type { Posture, SynthesisResult, TiseEvent } from "@/lib/tise/types";
+import { latLonToMgrs, parseMgrs } from "@/lib/tise/mgrs";
+import type {
+  Cluster,
+  MgrsPoint,
+  Posture,
+  SynthesisResult,
+  TiseEvent,
+} from "@/lib/tise/types";
 import { cn } from "cn";
 
 const PLAY_MS = 700;
 
 type Deck = "friction" | "ach";
 type MapSurface = "chart" | "cells";
+
+function clusterDisplayOrigin(
+  events: readonly TiseEvent[],
+  clusters: readonly Cluster[],
+) {
+  const located: MgrsPoint[] = [];
+  for (const event of events) {
+    const parsed = parseMgrs(event.location.mgrs);
+    if (parsed) located.push(parsed);
+  }
+  return localOrigin(
+    located.length > 0 ? located : clusters.map((cluster) => cluster.centroid),
+  );
+}
 
 function ChartFallback() {
   return (
@@ -298,6 +324,18 @@ export function TiseConsole() {
         (noise) => noise.event_id === event.event_id,
       ) && !quarantine.includes(event.event_id),
   );
+  const lineageCoords = useMemo(() => {
+    if (!activeCluster) return null;
+    const origin = clusterDisplayOrigin(
+      plottedEvents,
+      result?.clusters ?? [],
+    );
+    const pos = toDisplayLatLon(activeCluster.centroid, origin);
+    return {
+      latLon: formatLatLon(pos, 5),
+      mgrs: latLonToMgrs(pos.lat, pos.lon, 4) ?? "—",
+    };
+  }, [activeCluster, plottedEvents, result?.clusters]);
 
   function selectCluster(id: string) {
     setSelectedCluster(id);
@@ -538,11 +576,14 @@ export function TiseConsole() {
           <DialogHeader>
             <DialogTitle>
               Lineage · {activeCluster?.siteLabel ?? "AOI"}
+              {lineageCoords
+                ? ` · ${lineageCoords.latLon} · ${lineageCoords.mgrs}`
+                : ""}
             </DialogTitle>
             <DialogDescription>
               Payload hash to STANAG grade to opinion to posture.{" "}
-              {activeCluster
-                ? `b ${activeCluster.opinion.b.toFixed(2)} · d ${activeCluster.opinion.d.toFixed(2)} · u ${activeCluster.opinion.u.toFixed(2)}`
+              {activeCluster && lineageCoords
+                ? `b ${activeCluster.opinion.b.toFixed(2)} · d ${activeCluster.opinion.d.toFixed(2)} · u ${activeCluster.opinion.u.toFixed(2)} · Lat/Lon ${lineageCoords.latLon} · MGRS ${lineageCoords.mgrs}`
                 : "Select a hot zone."}
             </DialogDescription>
           </DialogHeader>

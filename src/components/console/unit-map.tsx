@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import L from "leaflet";
 import {
   MapContainer,
@@ -12,6 +13,7 @@ import {
   TileLayer,
   Tooltip,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./unit-map.css";
@@ -21,6 +23,7 @@ import {
   type LatLon,
   cellPolygon,
   equirectangularMeters,
+  formatLatLon,
   gridCellPolygons,
   liesOnWashingtonDc,
   localOrigin,
@@ -30,12 +33,53 @@ import {
   trainingAnchor,
 } from "@/lib/interop/training-chart";
 import { renderMilSymbolSvg } from "@/lib/interop/symbology";
-import { parseMgrs } from "@/lib/tise/mgrs";
+import { latLonToMgrs, parseMgrs } from "@/lib/tise/mgrs";
 import type { Cluster, MgrsPoint, TiseEvent } from "@/lib/tise/types";
 
-const OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const OSM_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+type BasemapId = "topo" | "imagery" | "dark";
+
+type BasemapLayer = {
+  url: string;
+  attribution: string;
+  maxNativeZoom: number;
+  label: string;
+  button: string;
+};
+
+const BASEMAP_ORDER: readonly BasemapId[] = ["topo", "imagery", "dark"];
+
+function basemapLayer(id: BasemapId): BasemapLayer {
+  switch (id) {
+    case "topo":
+      return {
+        url: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}",
+        attribution: "USGS The National Map",
+        maxNativeZoom: 16,
+        label: "Layer: USGS Topo · Mojave NTC",
+        button: "Topo",
+      };
+    case "imagery":
+      return {
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attribution: "Esri, Maxar, Earthstar Geographics",
+        maxNativeZoom: 18,
+        label: "Layer: Esri Imagery · Mojave NTC",
+        button: "Imagery",
+      };
+    case "dark":
+      return {
+        url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+        maxNativeZoom: 19,
+        label: "Layer: Tactical Dark · Mojave NTC",
+        button: "Dark",
+      };
+    default: {
+      const _exhaustive: never = id;
+      return _exhaustive;
+    }
+  }
+}
 
 const SHORT_ROAD_METERS = 2_000;
 
@@ -238,7 +282,7 @@ function cellStyle(occupied: boolean, selected: boolean): L.PathOptions {
       color: "#fde68a",
       weight: 2,
       fillColor: "#3f2e0a",
-      fillOpacity: 0.78,
+      fillOpacity: 0.42,
     };
   }
   if (occupied) {
@@ -246,14 +290,14 @@ function cellStyle(occupied: boolean, selected: boolean): L.PathOptions {
       color: "#f59e0b",
       weight: 1.4,
       fillColor: "#10202c",
-      fillOpacity: 0.7,
+      fillOpacity: 0.28,
     };
   }
   return {
     color: "#cbd5e1",
     weight: 1,
     fillColor: "#0c1924",
-    fillOpacity: 0.34,
+    fillOpacity: 0.14,
   };
 }
 
@@ -333,6 +377,33 @@ function MapLifecycle({
   return null;
 }
 
+function CursorReadout() {
+  const map = useMap();
+  const [pos, setPos] = useState<LatLon>(trainingAnchor);
+
+  useMapEvents({
+    mousemove(event) {
+      setPos({ lat: event.latlng.lat, lon: event.latlng.lng });
+    },
+    mouseout() {
+      setPos(trainingAnchor);
+    },
+  });
+
+  const host = map.getContainer().parentElement;
+  if (!host) return null;
+
+  const mgrs = latLonToMgrs(pos.lat, pos.lon, 4);
+
+  return createPortal(
+    <div className="tise-cursor-readout pointer-events-none">
+      <p>Lat/Lon {formatLatLon(pos, 5)}</p>
+      <p>MGRS {mgrs ?? "—"}</p>
+    </div>,
+    host,
+  );
+}
+
 function UnitMarker({
   cluster,
   position,
@@ -373,6 +444,8 @@ function UnitMarker({
       <Popup className="tise-unit-popup">
         <div className="min-w-36 space-y-0.5 font-mono text-[11px] text-zinc-100">
           <p className="font-semibold text-amber-100">{cluster.siteLabel}</p>
+          <p>Lat/Lon {formatLatLon(position, 5)}</p>
+          <p>MGRS {latLonToMgrs(position.lat, position.lon, 4) ?? "—"}</p>
           <p>Veracity {cluster.veracity.toFixed(2)}</p>
           <p>Admiralty {cluster.admiraltyCode}</p>
           <p>
@@ -416,6 +489,8 @@ export function UnitMap({
     [clusters, selectedClusterId],
   );
   const mapRef = useRef<L.Map | null>(null);
+  const [basemap, setBasemap] = useState<BasemapId>("topo");
+  const layer = basemapLayer(basemap);
 
   return (
     <div className="tise-map relative h-full min-h-0 w-full flex-1">
@@ -433,10 +508,16 @@ export function UnitMap({
           style={{
             height: "100%",
             width: "100%",
-            background: "#9ec9e0",
+            background: "#181c20",
           }}
         >
-          <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILES} maxZoom={19} />
+          <TileLayer
+            key={basemap}
+            attribution={layer.attribution}
+            url={layer.url}
+            maxNativeZoom={layer.maxNativeZoom}
+            maxZoom={19}
+          />
           {model.squares.map((square) => (
             <Polygon
               key={square.cell100m}
@@ -494,27 +575,50 @@ export function UnitMap({
             />
           ))}
           <ScaleControl position="bottomleft" metric imperial={false} />
+          <CursorReadout />
           <MapLifecycle focus={model.focus} signature={signature} />
         </MapContainer>
       </div>
       <div className="pointer-events-none absolute top-2 right-2 z-[1100] flex flex-col items-end gap-1">
-        <button
-          type="button"
-          onClick={() => {
-            const map = mapRef.current;
-            if (!map) return;
-            fitUnits(map, model.focus, true);
-          }}
-          className="pointer-events-auto rounded-sm border border-amber-300/60 bg-[#070b10]/90 px-2 py-1 font-mono text-[10px] tracking-wider text-amber-100 uppercase shadow-sm hover:bg-amber-200/15"
-        >
-          Fit units
-        </button>
+        <div className="flex items-center gap-1">
+          <div
+            role="group"
+            aria-label="Basemap"
+            className="tise-seg pointer-events-auto"
+          >
+            {BASEMAP_ORDER.map((id) => {
+              const option = basemapLayer(id);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={basemap === id}
+                  onClick={() => setBasemap(id)}
+                  className="tise-seg-btn"
+                >
+                  {option.button}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const map = mapRef.current;
+              if (!map) return;
+              fitUnits(map, model.focus, true);
+            }}
+            className="pointer-events-auto rounded-sm border border-amber-300/60 bg-[#070b10]/90 px-2 py-1 font-mono text-[10px] tracking-wider text-amber-100 uppercase shadow-sm hover:bg-amber-200/15"
+          >
+            Fit units
+          </button>
+        </div>
         <p className="rounded-sm bg-[#070b10]/80 px-1.5 py-0.5 font-mono text-[10px] text-zinc-300">
-          Layer: fictional chart on water
+          {layer.label}
         </p>
       </div>
       <p className="pointer-events-none absolute inset-x-0 bottom-0 z-[1100] flex h-5 items-center justify-center bg-[#070b10]/82 px-2 text-center font-mono text-[10px] tracking-wide text-amber-100">
-        Training datum. Relative MGRS geometry. Not a real place.
+        Training AOI · Fort Irwin NTC (Mojave) · Relative MGRS geometry · Not operational
       </p>
     </div>
   );
